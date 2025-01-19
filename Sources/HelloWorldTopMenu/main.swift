@@ -6,18 +6,78 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var countdownTimer: Timer?
     var remainingSeconds = 60
+    var selectedDuration = 60
+    var isOneTimeMode = false
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
+        // Create menu
+        setupMenu()
+        
         // Start the countdown
         startCountdown()
     }
     
+    func setupMenu() {
+        let menu = NSMenu()
+        
+        // Countdown time submenu
+        let countdownSubmenu = NSMenu()
+        let countdownMenuItem = NSMenuItem(title: "Countdown Time", action: nil, keyEquivalent: "")
+        countdownMenuItem.submenu = countdownSubmenu
+        
+        // Countdown time options
+        let durations = [
+            ("10 seconds", 10),
+            ("60 seconds", 60),
+            ("5 minutes", 300),
+            ("15 minutes", 900),
+            ("30 minutes", 1800),
+            ("60 minutes", 3600)
+        ]
+        
+        for (title, duration) in durations {
+            let item = NSMenuItem(title: title, action: #selector(setCountdownTime(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = duration
+            countdownSubmenu.addItem(item)
+        }
+        
+        // One-time mode toggle
+        let oneTimeModeItem = NSMenuItem(title: "One-time Mode", action: #selector(toggleOneTimeMode(_:)), keyEquivalent: "")
+        oneTimeModeItem.target = self
+        oneTimeModeItem.state = isOneTimeMode ? .on : .off
+        menu.addItem(oneTimeModeItem)
+        
+        // Add submenu to main menu
+        menu.addItem(countdownMenuItem)
+        
+        // Quit item
+        menu.addItem(NSMenuItem.separator())
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
+        
+        // Set the menu to the status item
+        statusItem?.menu = menu
+    }
+    
+    @objc func setCountdownTime(_ sender: NSMenuItem) {
+        guard let duration = sender.representedObject as? Int else { return }
+        selectedDuration = duration
+        remainingSeconds = duration
+        updateStatusItemTitle()
+    }
+    
+    @objc func toggleOneTimeMode(_ sender: NSMenuItem) {
+        isOneTimeMode.toggle()
+        sender.state = isOneTimeMode ? .on : .off
+    }
+    
     func startCountdown() {
         // Reset remaining seconds
-        remainingSeconds = 60
+        remainingSeconds = selectedDuration
         
         // Update status item title immediately
         updateStatusItemTitle()
@@ -40,6 +100,13 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
                 // Invalidate the timer
                 timer.invalidate()
                 
+                // Restart the countdown based on mode
+                if self.isOneTimeMode {
+                    // Reset to default 60 seconds after one-time mode
+                    self.selectedDuration = 60
+                    self.isOneTimeMode = false
+                }
+                
                 // Restart the countdown
                 self.startCountdown()
             }
@@ -48,25 +115,23 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     
     func updateStatusItemTitle() {
         if let button = statusItem?.button {
-            button.title = "Lock in: \(remainingSeconds)s"
+            let minutes = remainingSeconds / 60
+            let seconds = remainingSeconds % 60
+            button.title = String(format: "Lock in: %02d:%02d", minutes, seconds)
         }
     }
     
     func lockScreen() {
-        // Modern macOS screen lock method using AppleScript
-        let script = """
-        tell application "System Events"
-            keystroke "q" using {control down, command down}
-        end tell
-        """
+        // Use shell command to lock screen
+        let task = Process()
+        task.launchPath = "/bin/bash"
+        task.arguments = ["-c", "osascript -e 'tell application \"System Events\" to sleep'"]
         
-        let appleScript = NSAppleScript(source: script)
-        var error: NSDictionary?
-        
-        appleScript?.executeAndReturnError(&error)
-        
-        if let err = error {
-            print("Failed to lock screen: \(err)")
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            print("Failed to lock screen: \(error)")
         }
     }
     

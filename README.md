@@ -1,24 +1,38 @@
 # Countdown Lock Screen
 
-A macOS menu bar app that provides a 1-minute countdown before automatically locking the screen.
+A macOS menu bar app that provides a configurable countdown before automatically locking the screen.
 
 ## Features
 - Runs in the top menu bar
 - Does not appear in the dock
 - Displays countdown timer
-- Automatically locks screen after 1 minute
-- Continuously repeats the cycle
+- Customizable countdown duration
+- One-time mode option
+- Automatically locks screen
 
-## How to Run
-1. Build with Swift Package Manager
-2. Run the executable
-3. Watch the countdown in the menu bar
+## Countdown Options
+- 10 seconds
+- 60 seconds (default)
+- 5 minutes
+- 15 minutes
+- 30 minutes
+- 60 minutes
+
+## Usage
+- Click on the menu bar to access options
+- Select desired countdown time
+- Toggle one-time mode if needed
+- Screen locks automatically when countdown reaches zero
+
+## Modes
+- Continuous Mode: Repeats default 60-second countdown
+- One-time Mode: Uses selected duration once, then returns to default
 
 ## Requirements
 - macOS 11+
 - Swift 5.5+
 
-## Usage
-- The app will show remaining seconds in the menu bar
-- When countdown reaches 0, the screen will lock
-- Cycle automatically restarts after locking
+## Troubleshooting
+- Ensure you have permissions to run AppleScript
+- Check system sleep settings
+- Manually adjust screen lock settings if needed
