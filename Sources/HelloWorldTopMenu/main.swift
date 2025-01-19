@@ -1,4 +1,5 @@
 import Cocoa
+import Foundation
 
 @main
 class TopMenuApp: NSObject, NSApplicationDelegate {
@@ -9,7 +10,10 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-            button.title = "Hello World"
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "HH:mm:ss"
+            let timeString = dateFormatter.string(from: Date())
+            button.title = "Hello World (\(timeString))"
         }
     }
     
