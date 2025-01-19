@@ -9,7 +9,6 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "HelloWorldTopMenu",
-            dependencies: [],
             path: "Sources/HelloWorldTopMenu"
         )
     ]
