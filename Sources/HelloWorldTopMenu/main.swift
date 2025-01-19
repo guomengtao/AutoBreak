@@ -9,21 +9,20 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     var selectedDuration = 60
     var isOneTimeMode = false
     var isCountdownActive = false
-    var menu: NSMenu?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        // Create initial menu
-        createMenu()
+        // Setup initial menu
+        setupMenu()
         
         // Start the countdown
         startCountdown()
     }
     
-    func createMenu() {
-        menu = NSMenu()
+    func setupMenu() {
+        let menu = NSMenu()
         
         // Countdown time submenu
         let countdownSubmenu = NSMenu()
@@ -44,7 +43,6 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
             let item = NSMenuItem(title: title, action: #selector(setCountdownTime(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = duration
-            item.isEnabled = !isCountdownActive
             countdownSubmenu.addItem(item)
         }
         
@@ -52,11 +50,10 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         let oneTimeModeItem = NSMenuItem(title: "One-time Mode", action: #selector(toggleOneTimeMode(_:)), keyEquivalent: "")
         oneTimeModeItem.target = self
         oneTimeModeItem.state = isOneTimeMode ? .on : .off
-        oneTimeModeItem.isEnabled = !isCountdownActive
-        menu?.addItem(oneTimeModeItem)
+        menu.addItem(oneTimeModeItem)
         
         // Add submenu to main menu
-        menu?.addItem(countdownMenuItem)
+        menu.addItem(countdownMenuItem)
         
         // Set the menu to the status item
         statusItem?.menu = menu
@@ -65,7 +62,7 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     @objc func setCountdownTime(_ sender: NSMenuItem) {
         guard let duration = sender.representedObject as? Int else { return }
         
-        // Stop current countdown if any
+        // Stop current countdown
         countdownTimer?.invalidate()
         
         // Set new duration
@@ -73,8 +70,8 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         remainingSeconds = duration
         isCountdownActive = true
         
-        // Update menu to be completely disabled
-        createMenu()
+        // Forcibly close the menu
+        statusItem?.menu = nil
         
         // Restart countdown
         startCountdown()
@@ -93,9 +90,6 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         
         // Update status item title immediately
         updateStatusItemTitle()
-        
-        // Create menu with all items disabled
-        createMenu()
         
         // Create a timer that fires every second
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -125,8 +119,8 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
                 // Reset countdown active state
                 self.isCountdownActive = false
                 
-                // Recreate menu with all items enabled
-                self.createMenu()
+                // Recreate menu
+                self.setupMenu()
                 
                 // Restart the countdown
                 self.startCountdown()
