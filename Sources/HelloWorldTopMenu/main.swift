@@ -53,15 +53,20 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     }
     
     func lockScreen() {
-        // Use macOS command to lock screen
-        let task = Process()
-        task.launchPath = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession"
-        task.arguments = ["-suspend"]
+        // Modern macOS screen lock method using AppleScript
+        let script = """
+        tell application "System Events"
+            keystroke "q" using {control down, command down}
+        end tell
+        """
         
-        do {
-            try task.run()
-        } catch {
-            print("Failed to lock screen: \(error)")
+        let appleScript = NSAppleScript(source: script)
+        var error: NSDictionary?
+        
+        appleScript?.executeAndReturnError(&error)
+        
+        if let err = error {
+            print("Failed to lock screen: \(err)")
         }
     }
     
