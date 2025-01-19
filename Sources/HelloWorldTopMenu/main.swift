@@ -8,13 +8,11 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     var remainingSeconds = 60
     var selectedDuration = 60
     var isOneTimeMode = false
+    var isCountdownActive = false
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
-        // Create menu
-        setupMenu()
         
         // Start the countdown
         startCountdown()
@@ -42,6 +40,9 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
             let item = NSMenuItem(title: title, action: #selector(setCountdownTime(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = duration
+            
+            // Disable menu items if countdown is active
+            item.isEnabled = !isCountdownActive
             countdownSubmenu.addItem(item)
         }
         
@@ -49,15 +50,11 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         let oneTimeModeItem = NSMenuItem(title: "One-time Mode", action: #selector(toggleOneTimeMode(_:)), keyEquivalent: "")
         oneTimeModeItem.target = self
         oneTimeModeItem.state = isOneTimeMode ? .on : .off
+        oneTimeModeItem.isEnabled = !isCountdownActive
         menu.addItem(oneTimeModeItem)
         
         // Add submenu to main menu
         menu.addItem(countdownMenuItem)
-        
-        // Quit item
-        menu.addItem(NSMenuItem.separator())
-        let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        menu.addItem(quitItem)
         
         // Set the menu to the status item
         statusItem?.menu = menu
@@ -65,12 +62,21 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     
     @objc func setCountdownTime(_ sender: NSMenuItem) {
         guard let duration = sender.representedObject as? Int else { return }
+        
+        // Stop current countdown
+        countdownTimer?.invalidate()
+        
+        // Set new duration
         selectedDuration = duration
         remainingSeconds = duration
-        updateStatusItemTitle()
+        isCountdownActive = true
+        
+        // Restart countdown
+        startCountdown()
     }
     
     @objc func toggleOneTimeMode(_ sender: NSMenuItem) {
+        guard !isCountdownActive else { return }
         isOneTimeMode.toggle()
         sender.state = isOneTimeMode ? .on : .off
     }
@@ -78,9 +84,13 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     func startCountdown() {
         // Reset remaining seconds
         remainingSeconds = selectedDuration
+        isCountdownActive = true
         
         // Update status item title immediately
         updateStatusItemTitle()
+        
+        // Setup menu with disabled items
+        setupMenu()
         
         // Create a timer that fires every second
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -106,6 +116,12 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
                     self.selectedDuration = 60
                     self.isOneTimeMode = false
                 }
+                
+                // Reset countdown active state
+                self.isCountdownActive = false
+                
+                // Setup menu with enabled items
+                self.setupMenu()
                 
                 // Restart the countdown
                 self.startCountdown()

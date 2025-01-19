@@ -22,6 +22,7 @@ A macOS menu bar app that provides a configurable countdown before automatically
 - Click on the menu bar to access options
 - Select desired countdown time
 - Toggle one-time mode if needed
+- Menu options are disabled during active countdown
 - Screen locks automatically when countdown reaches zero
 
 ## Modes
