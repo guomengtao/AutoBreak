@@ -10,6 +10,11 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     var isOneTimeMode = false
     var isCountdownActive = false
     
+    // 版本信息
+    let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    let appName = "HelloWorldTopMenu"
+    let githubRepo = "https://github.com/guomengtao/HelloWorldTopMenu"
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -23,6 +28,18 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
     
     func setupMenu() {
         let menu = NSMenu()
+        
+        // 添加项目信息
+        let projectInfoItem = NSMenuItem(title: "\(appName) v\(appVersion)", action: nil, keyEquivalent: "")
+        projectInfoItem.isEnabled = false
+        menu.addItem(projectInfoItem)
+        
+        // 添加 GitHub 链接
+        let githubItem = NSMenuItem(title: "GitHub Repository", action: #selector(openGitHub), keyEquivalent: "")
+        githubItem.target = self
+        menu.addItem(githubItem)
+        
+        menu.addItem(NSMenuItem.separator())
         
         // Countdown time submenu
         let countdownSubmenu = NSMenu()
@@ -57,6 +74,12 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         
         // Set the menu to the status item
         statusItem?.menu = menu
+    }
+    
+    @objc func openGitHub() {
+        if let url = URL(string: githubRepo) {
+            NSWorkspace.shared.open(url)
+        }
     }
     
     @objc func setCountdownTime(_ sender: NSMenuItem) {
@@ -132,7 +155,8 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             let minutes = remainingSeconds / 60
             let seconds = remainingSeconds % 60
-            button.title = String(format: "Lock in: %02d:%02d", minutes, seconds)
+            // 使用锁图标替代 "Lock in:" 文本
+            button.title = "🔒 \(String(format: "%02d:%02d", minutes, seconds))"
         }
     }
     
@@ -140,7 +164,20 @@ class TopMenuApp: NSObject, NSApplicationDelegate {
         // Use shell command to lock screen
         let task = Process()
         task.launchPath = "/bin/bash"
-        task.arguments = ["-c", "osascript -e 'tell application \"System Events\" to sleep'"]
+        
+        // Special lock durations for specific countdown times
+        var lockCommand = "osascript -e 'tell application \"System Events\" to sleep'"
+        
+        // Add MacOSLock specific durations
+        if selectedDuration == 1800 { // 30 minutes countdown
+            lockCommand = "osascript -e 'tell application \"MacOSLock\" to open location \"macoslock://lock?duration=300\"'"
+        } else if selectedDuration == 3600 { // 60 minutes countdown
+            lockCommand = "osascript -e 'tell application \"MacOSLock\" to open location \"macoslock://lock?duration=600\"'"
+        } else if selectedDuration == 10 { // 10 seconds countdown
+            lockCommand = "osascript -e 'tell application \"MacOSLock\" to open location \"macoslock://lock?duration=20\"'"
+        }
+        
+        task.arguments = ["-c", lockCommand]
         
         do {
             try task.run()
