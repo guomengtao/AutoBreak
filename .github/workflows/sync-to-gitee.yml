@@ -18,4 +18,4 @@ jobs:
           account_type: user
           clone_style: ssh
           force_update: true
-          static_list: AutoBreak,ForceLock,exam_load,resume,message-board
+          static_list: AutoBreak
